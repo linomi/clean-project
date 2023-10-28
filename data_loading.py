@@ -1,6 +1,6 @@
 from filter_cells import filter
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
-boc = BrainObservatoryCache(cache= True,manifest_file='/content/drive/MyDrive/thesis/brain_observatory_manifest.json')
+boc = BrainObservatoryCache(cache= True,manifest_file='../brain_data/brain_observatory_manifest.json')
 import numpy as np
 def load_data(experiment_id):
     nwb = boc.get_ophys_experiment_data(ophys_experiment_id=experiment_id)
@@ -30,5 +30,5 @@ def load_data(experiment_id):
     val_trace = val_trace.transpose()
     val_trace = val_trace[:,targeted_cells]
     
-    runing_speed = nwb.get_running_speed()
-    return (train_movie,train_trace),(val_movie,val_trace)
+    runing_speed = nwb.get_running_speed()[0][np.array(nwb.get_stimulus_table('natural_movie_three'))]
+    return (train_movie,train_trace),(val_movie,val_trace),runing_speed
