@@ -30,4 +30,5 @@ def load_data(experiment_id):
     val_trace = val_trace.transpose()
     val_trace = val_trace[:,targeted_cells]
     
+    runing_speed = nwb.get_running_speed()
     return (train_movie,train_trace),(val_movie,val_trace)

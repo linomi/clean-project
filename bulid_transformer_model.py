@@ -103,12 +103,12 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
 
     encoded_patches = layers.Reshape((delay,-1))(encoded_patches)
     encoded_patches = ModulationEmbedding()(encoded_patches,runing_speed)
-
+    encoded_patches = layers.Dense(units=embed_dim)(encoded_patches)
     for _ in range(num_spatial_tranformers):
         # Layer normalization and MHSA
         x1 = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
         attention_output = layers.MultiHeadAttention(
-            num_heads=num_heads, key_dim=embed_dim // num_heads, dropout=0.1,attention_axes=-2
+            num_heads=num_heads, key_dim=embed_dim // num_heads, dropout=0.1
         )(x1, x1)
 
         # Skip connection
