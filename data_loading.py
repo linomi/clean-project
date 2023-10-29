@@ -1,6 +1,6 @@
 from filter_cells import filter
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
-boc = BrainObservatoryCache(cache= True,manifest_file='../brain_data/brain_observatory_manifest.json')
+boc = BrainObservatoryCache(cache= True,manifest_file='../thesis/brain_observatory_manifest.json')
 import numpy as np
 def load_data(experiment_id,switch_data = False):
     nwb = boc.get_ophys_experiment_data(ophys_experiment_id=experiment_id)
