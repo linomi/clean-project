@@ -38,9 +38,8 @@ class ModulationEmbedding(layers.Layer):
         # Encode the positions and add it to the encoded tokens
         encoded_positions = self.position_embedding(self.positions)
         encoded_speed = self.speed_embedding(runing_speed)
-        x = encoded_tokens + encoded_speed
         encoded_tokens = encoded_tokens + encoded_speed + encoded_positions
-        return 
+        return encoded_tokens
 
 class PositionalEncoder(layers.Layer):
     def __init__(self, embed_dim, **kwargs):
@@ -48,7 +47,7 @@ class PositionalEncoder(layers.Layer):
         self.embed_dim = embed_dim
 
     def build(self, input_shape):
-        _, num_tokens, _ = input_shape
+        _,_, num_tokens, _ = input_shape
         self.position_embedding = layers.Embedding(
             input_dim=num_tokens, output_dim=self.embed_dim
         )
@@ -73,9 +72,9 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
 
 
     inputs = layers.Input(shape=input_shape)
-    runing_speed = layers.Input(shape = (delay))
+    running_speed_input = layers.Input(shape = (delay))
     # Create patches.
-    patches = Tublet_projection(patch_size=(delay,10,10),embed_dim=embed_dim)(inputs)
+    patches = Tublet_projection(patch_size=(16,16),embed_dim=embed_dim)(inputs)
     pathces = Lambda(lambda x : x/255.0)(patches)
     # Encode patches.
     encoded_patches = PositionalEncoder(embed_dim=embed_dim)(pathces)
@@ -102,9 +101,9 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
         encoded_patches = layers.Add()([x3, x2])
 
     encoded_patches = layers.Reshape((delay,-1))(encoded_patches)
-    encoded_patches = ModulationEmbedding()(encoded_patches,runing_speed)
+    encoded_patches = ModulationEmbedding()(encoded_patches,running_speed_input)
     encoded_patches = layers.Dense(units=embed_dim)(encoded_patches)
-    for _ in range(num_spatial_tranformers):
+    for _ in range(num_temporal_transfomers):
         # Layer normalization and MHSA
         x1 = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
         attention_output = layers.MultiHeadAttention(
@@ -131,5 +130,6 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
     representation = layers.LayerNormalization(epsilon=LAYER_NORM_EPS)(encoded_patches)
     representation = layers.GlobalAvgPool1D()(representation)
     outputs = layers.Dense(units=output_shape, activation="linear")(representation)
-    model = keras.Model(inputs=inputs, outputs=outputs)
+    model = keras.Model(inputs=[inputs,running_speed_input], outputs=outputs)
     return model
+model = bulid_model(num_heads=4,spatial_layers=3,temporal_layers=2,delay=40,embed_dim=128,output_shape=8)

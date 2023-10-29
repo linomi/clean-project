@@ -2,11 +2,14 @@ from filter_cells import filter
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
 boc = BrainObservatoryCache(cache= True,manifest_file='../brain_data/brain_observatory_manifest.json')
 import numpy as np
-def load_data(experiment_id):
+def load_data(experiment_id,switch_data = False):
     nwb = boc.get_ophys_experiment_data(ophys_experiment_id=experiment_id)
     num_cells = len(nwb.get_cell_specimen_ids())
-    nwb.get_cell_specimen_indices()
-    targeted_cells = filter(nwb= nwb,train_reliability=0.5,test_reliability=0.3)
+    targeted_cells = filter(nwb= nwb,train_reliability=0.4,test_reliability=0)
+    if len(targeted_cells) == 0 : 
+    
+        raise Exception('two tight reliablity, no cells founded by forced criteria ')
+    
     train_movie = nwb.get_stimulus_template('natural_movie_three')
     train_movie = np.expand_dims(train_movie,axis = 3)
     dff = nwb.get_dff_traces(cell_specimen_ids=nwb.get_cell_specimen_ids())
@@ -16,6 +19,10 @@ def load_data(experiment_id):
     train_trace = (train_trace - np.expand_dims(train_trace.min(axis = 1),axis = 1))/(np.expand_dims(train_trace.max(axis = 1),axis = 1)- np.expand_dims(train_trace.min(axis = 1),axis = 1))
     train_trace = train_trace.transpose()
     train_trace = train_trace[:,targeted_cells]
+    running_speed_train = nwb.get_running_speed()[0][np.array(nwb.get_stimulus_table('natural_movie_three'))[:,2]]
+    running_speed_train = running_speed_train.reshape((10,-1)).mean(axis =0)
+    running_speed_train[np.where(running_speed_train=='Nan')] = 0
+   
 
 
 
@@ -29,6 +36,13 @@ def load_data(experiment_id):
     val_trace = (val_trace - np.expand_dims(val_trace.min(axis = 1),axis = 1))/(np.expand_dims(val_trace.max(axis = 1),axis = 1)- np.expand_dims(val_trace.min(axis = 1),axis = 1))
     val_trace = val_trace.transpose()
     val_trace = val_trace[:,targeted_cells]
+    running_speed_val = nwb.get_running_speed()[0][np.array(nwb.get_stimulus_table('natural_movie_one'))[:,2]]
+    running_speed_val = running_speed_val.reshape((10,-1)).mean(axis = 0)
+
+    running_speed_val[np.where(running_speed_train=='Nan')] = 0    
+
     
-    runing_speed = nwb.get_running_speed()[0][np.array(nwb.get_stimulus_table('natural_movie_three'))]
-    return (train_movie,train_trace),(val_movie,val_trace),runing_speed
+    if switch_data: 
+        return (val_movie,val_trace,running_speed_val),(train_movie,train_trace,running_speed_train)
+    else:
+        return (train_movie,train_trace,running_speed_train),(val_movie,val_trace,running_speed_val)
