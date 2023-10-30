@@ -1,13 +1,12 @@
 from filter_cells import filter
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
-boc = BrainObservatoryCache(cache= True,manifest_file='../thesis/brain_observatory_manifest.json')
+boc = BrainObservatoryCache(cache= True,manifest_file='../brain_data/brain_observatory_manifest.json')
 import numpy as np
-def load_data(experiment_id,switch_data = False):
+def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reliablity = 0.6):
     nwb = boc.get_ophys_experiment_data(ophys_experiment_id=experiment_id)
     num_cells = len(nwb.get_cell_specimen_ids())
-    targeted_cells = filter(nwb= nwb,train_reliability=0.4,test_reliability=0)
-    if len(targeted_cells) == 0 : 
-    
+    targeted_cells = filter(nwb= nwb,train_reliability=train_reliablity,test_reliability=test_reliablity)
+    if len(targeted_cells) == 0: 
         raise Exception('two tight reliablity, no cells founded by forced criteria ')
     
     train_movie = nwb.get_stimulus_template('natural_movie_three')
