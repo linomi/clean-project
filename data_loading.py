@@ -2,6 +2,7 @@ from filter_cells import filter
 from allensdk.core.brain_observatory_cache import BrainObservatoryCache
 boc = BrainObservatoryCache(cache= True,manifest_file='../brain_data/brain_observatory_manifest.json')
 import numpy as np
+
 def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reliablity = 0.6):
     nwb = boc.get_ophys_experiment_data(ophys_experiment_id=experiment_id)
     num_cells = len(nwb.get_cell_specimen_ids())
@@ -20,6 +21,7 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
     train_trace = train_trace[:,targeted_cells]
     running_speed_train = nwb.get_running_speed()[0][np.array(nwb.get_stimulus_table('natural_movie_three'))[:,2]]
     running_speed_train = running_speed_train.reshape((10,-1)).mean(axis =0)
+    running_speed_train = (running_speed_train - running_speed_train.min())/(running_speed_train.max() - running_speed_train.min())
     running_speed_train[np.where(running_speed_train=='Nan')] = 0
    
 
@@ -37,6 +39,7 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
     val_trace = val_trace[:,targeted_cells]
     running_speed_val = nwb.get_running_speed()[0][np.array(nwb.get_stimulus_table('natural_movie_one'))[:,2]]
     running_speed_val = running_speed_val.reshape((10,-1)).mean(axis = 0)
+    running_speed_val = (running_speed_val - running_speed_val.min())/(running_speed_val.max() - running_speed_val.min())
 
     running_speed_val[np.where(running_speed_train=='Nan')] = 0    
 
