@@ -1,4 +1,4 @@
-Here is a draft README that provides an overview of your code for modeling mouse visual cortex using Transformers:
+
 
 # Transformers for Modeling Mouse Visual Cortex 
 
@@ -66,4 +66,4 @@ Relevant papers on neural encoding models:
 - Cadena et al. PLoS Comp Bio 2019
 - Batty et al. Nature Neuro 2016
 
-Let me know if you would like any sections expanded or additional details covered! Also happy to incorporate any other code files or results you want highlighted.
+
