@@ -23,6 +23,7 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
     running_speed_train = running_speed_train.reshape((10,-1)).mean(axis =0)
     running_speed_train = (running_speed_train - running_speed_train.min())/(running_speed_train.max() - running_speed_train.min())
     running_speed_train[np.where(running_speed_train=='Nan')] = 0
+    eye_data_train = nwb.get_pupil_location()[1][np.array(nwb.get_stimulus_table('natural_movie_three'))[:,2],:]
    
 
 
@@ -40,7 +41,7 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
     running_speed_val = nwb.get_running_speed()[0][np.array(nwb.get_stimulus_table('natural_movie_one'))[:,2]]
     running_speed_val = running_speed_val.reshape((10,-1)).mean(axis = 0)
     running_speed_val = (running_speed_val - running_speed_val.min())/(running_speed_val.max() - running_speed_val.min())
-
+    eye_data_val = nwb.get_pupil_location()[1][np.array(nwb.get_stimulus_table('natural_movie_one'))[:,2],:]
     running_speed_val[np.where(running_speed_train=='Nan')] = 0    
 
     
