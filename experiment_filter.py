@@ -31,6 +31,10 @@ def filter(area,minimum_reliablity):
             
     cells = boc.get_cell_specimens(filters=filters)
     cells = [cell['cell_specimen_id'] for cell in cells]
-    experiments = boc.get_ophys_experiments(targeted_structures=['VISl'],imaging_depths=depth,session_types=['three_session_A'],require_eye_tracking=True,cell_specimen_ids=cells)
+    experiments = boc.get_ophys_experiments(targeted_structures=[area]
+                                            ,imaging_depths=depth
+                                            ,session_types=['three_session_A']
+                                            ,require_eye_tracking=True
+                                            ,cell_specimen_ids=cells)
     ids = [experiment['id'] for experiment in experiments ]
     return ids
