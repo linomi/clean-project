@@ -10,6 +10,7 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
     if len(targeted_cells) == 0: 
         raise Exception('two tight reliablity, no cells founded by forced criteria ')
     
+    eye_data = boc.get_eye_tracking(ophys_experiment_id=experiment_id)
     train_movie = nwb.get_stimulus_template('natural_movie_three')
     train_movie = np.expand_dims(train_movie,axis = 3)
     dff = nwb.get_dff_traces(cell_specimen_ids=nwb.get_cell_specimen_ids())
@@ -22,9 +23,12 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
     running_speed_train = nwb.get_running_speed()[0][np.array(nwb.get_stimulus_table('natural_movie_three'))[:,2]]
     running_speed_train = running_speed_train.reshape((10,-1)).mean(axis =0)
     running_speed_train = (running_speed_train - running_speed_train.min())/(running_speed_train.max() - running_speed_train.min())
-    running_speed_train[np.where(running_speed_train=='Nan')] = 0
-    eye_data_train = nwb.get_pupil_location()[1][np.array(nwb.get_stimulus_table('natural_movie_three'))[:,2],:]
-   
+    #running_speed_train[np.where(running_speed_train=='Nan')] = 0
+    
+    eye_data_train = eye_data[np.array(nwb.get_stimulus_table('natural_movie_three'))[:,2]]
+    eye_data_train = eye_data_train.reshape((10,3600,-1)).mean(axis = 0)
+
+    
 
 
 
@@ -39,13 +43,15 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
     val_trace = val_trace.transpose()
     val_trace = val_trace[:,targeted_cells]
     running_speed_val = nwb.get_running_speed()[0][np.array(nwb.get_stimulus_table('natural_movie_one'))[:,2]]
+    print(running_speed_val.shape,'im here')
     running_speed_val = running_speed_val.reshape((10,-1)).mean(axis = 0)
     running_speed_val = (running_speed_val - running_speed_val.min())/(running_speed_val.max() - running_speed_val.min())
-    eye_data_val = nwb.get_pupil_location()[1][np.array(nwb.get_stimulus_table('natural_movie_one'))[:,2],:]
-    running_speed_val[np.where(running_speed_train=='Nan')] = 0    
+    eye_data_val = eye_data[np.array(nwb.get_stimulus_table('natural_movie_one'))[:,2]]
+    eye_data_val = eye_data_val.reshape((10,900,-1)).mean(axis = 0)
+    #running_speed_val[np.where(running_speed_train=='Nan')] = 0    
 
-    
+
     if switch_data: 
         return (val_movie,val_trace,running_speed_val),(train_movie,train_trace,running_speed_train)
     else:
-        return (train_movie,train_trace,running_speed_train),(val_movie,val_trace,running_speed_val)
+        return (train_movie,train_trace,running_speed_train,eye_data_train),(val_movie,val_trace,running_speed_val,eye_data_val)

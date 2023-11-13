@@ -129,7 +129,8 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
 
     representation = layers.LayerNormalization(epsilon=LAYER_NORM_EPS)(encoded_patches)
     representation = layers.GlobalAvgPool1D()(representation)
-    outputs = layers.Dense(units=output_shape, activation="linear",kernel_regularizer="l1_l2")(representation)
+    regularization = tf.keras.regularizers.L1L2(l1=1e-6, l2=1e-6)
+    outputs = layers.Dense(units=output_shape, activation="linear",kernel_regularizer=regularization)(representation)
     model = keras.Model(inputs=[inputs,running_speed_input], outputs=outputs)
     return model
 model = bulid_model(num_heads=4,spatial_layers=3,temporal_layers=2,delay=40,embed_dim=128,output_shape=8)
