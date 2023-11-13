@@ -2,13 +2,20 @@ import tensorflow as tf
 
 class AffineLayer(tf.keras.layers.Layer):
 
-    def __init__(self, downsample_factor = 1):
+    def __init__(self,shape, downsample_factor = 1):
 
         # output resolution downgration.
         super(AffineLayer, self).__init__();
         self.downsample_factor = downsample_factor;
+        self.shape = shape
+        self.image_shape = shape[2:5]
+        self.affine_shape = shape[-2:]
 
-    def call(self, inputs, affines):
+    def call(self, data):
+        inputs = data[:,:tf.math.reduce_prod(self.image_shape)]
+        inputs = tf.reshape(inputs,(-1,self.image_shape[0],self.image_shape[1],self.image_shape[2]))
+        affines = data[:,tf.math.reduce_prod(self.image_shape):]
+        affines = tf.reshape(affines,shape = (-1,self.affine_shape[0],self.affine_shape[1]))
 
         # affine transform output grid to the input grid and extract intensity back to output
         assert len(inputs.shape) == 4;
@@ -71,4 +78,19 @@ class AffineLayer(tf.keras.layers.Layer):
         output = weighted_sum / weight_sum;
         # reshape output
         output = tf.keras.layers.Reshape((input_shape[1] // self.downsample_factor, input_shape[2] // self.downsample_factor, input_shape[3]))(output);
-        return output;
+        return output
+    
+class Affine_transform(tf.keras.layers.Layer): 
+    def call(self,stimuli_input,eye_input):
+        shape_stimuli = tf.shape(stimuli_input)
+        shape_eye = tf.shape(eye_input)
+        shape = tf.concat([shape_stimuli,shape_eye],axis =0)
+        b = shape[0]
+        f = shape[1]
+        stimuli_input = tf.reshape(stimuli_input,shape=(b,f,-1))
+        eye_input = tf.reshape(eye_input,shape = (b,f,-1))
+        eye_input = tf.cast(eye_input,dtype = tf.float32)
+        input_data = tf.concat([stimuli_input,eye_input],axis = -1 )
+        out = tf.map_fn(AffineLayer(shape),input_data)
+        return out 
+        
