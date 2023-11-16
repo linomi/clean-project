@@ -26,6 +26,7 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
     #running_speed_train[np.where(running_speed_train=='Nan')] = 0
     
     eye_data_train = eye_data[np.array(nwb.get_stimulus_table('natural_movie_three'))[:,2]]
+    eye_data_train = np.nan_to_num(eye_data_train)
     eye_data_train = eye_data_train.reshape((10,3600,-1)).mean(axis = 0)[:,1:]
 
     
@@ -47,6 +48,7 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
     running_speed_val = running_speed_val.reshape((10,-1)).mean(axis = 0)
     running_speed_val = (running_speed_val - running_speed_val.min())/(running_speed_val.max() - running_speed_val.min())
     eye_data_val = eye_data[np.array(nwb.get_stimulus_table('natural_movie_one'))[:,2]]
+    eye_data_val = np.nan_to_num(eye_data_val)
     eye_data_val = eye_data_val.reshape((10,900,-1)).mean(axis = 0)[:,1:]
     #running_speed_val[np.where(running_speed_train=='Nan')] = 0    
 
