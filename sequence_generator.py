@@ -1,6 +1,6 @@
 import numpy as np 
 import tensorflow as tf
-def seq_generator(x,y,r,delay,shuffle = True,batch_size = 3):
+def seq_generator(x,y,r,e,delay,shuffle = True,batch_size = 3):
     seqsx = np.array(list(tf.keras.utils.timeseries_dataset_from_array(list(range(len(x))),None,delay,1,1,1,start_index = 0)))
     idx = np.arange(min(len(seqsx),len(y)))
     idx = idx[:len(idx)-(len(idx)%batch_size)]
@@ -14,5 +14,6 @@ def seq_generator(x,y,r,delay,shuffle = True,batch_size = 3):
       for id in idx:
         movie_input  = x[seqsx[id].squeeze()]
         running_input = r[seqsx[id].squeeze()]
+        eye_input = e[seqsx[id].squeeze()]
         target = y[id]
-        yield ([movie_input,running_input],target)
+        yield ([movie_input,running_input,eye_input],target)

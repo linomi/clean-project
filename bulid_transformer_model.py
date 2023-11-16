@@ -5,6 +5,7 @@ import gc
 from tensorflow import keras
 from keras import layers
 from keras.models import Model
+from new_affine_transformation import Af
 
 class Tublet_projection(layers.Layer):
     def __init__(self, embed_dim, patch_size, **kwargs):
@@ -71,19 +72,37 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
 
 
 
-    inputs = layers.Input(shape=input_shape)
-    running_speed_input = layers.Input(shape = (delay))
+    inputs = layers.Input(shape=input_shape,name="image_input")
+    running_speed_input = layers.Input(shape = (delay),name= "running_input")
+    eye_tracking_input  = layers.Input(shape = (delay,4),name= 'eye_input')
+
+    
+    
+    # trsnform eye tracking data to be feed in Affine tranformation layer
+    e_dense = layers.Dense(32,activation='elu')(eye_tracking_input)
+    e_dense = layers.Dense(16,activation='elu')(e_dense)
+    e_dense = layers.Dense(6,activation='tanh')(e_dense)
+    e_dense = layers.Reshape((delay,6))(e_dense)
+
+    
+
+    # Affine transformation 
+
+    transformed = Af()(inputs,e_dense)
+
     # Create patches.
-    patches = Tublet_projection(patch_size=(16,16),embed_dim=embed_dim)(inputs)
+    patches = Tublet_projection(patch_size=(16,16),embed_dim=embed_dim)(transformed)
     pathces = Lambda(lambda x : x/255.0)(patches)
-    # Encode patches.
+    #Encode patches.
     encoded_patches = PositionalEncoder(embed_dim=embed_dim)(pathces)
+
+    #spatial Encoder
     for _ in range(num_spatial_tranformers):
         # Layer normalization and MHSA
         x1 = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
         attention_output = layers.MultiHeadAttention(
             num_heads=num_heads, key_dim=embed_dim // num_heads, dropout=0.1,attention_axes=-2
-        )(x1, x1)
+        )(x1, x1)  # attention axis = -2 indicates that attention score calculate along spatial axis
 
         # Skip connection
         x2 = layers.Add()([attention_output, encoded_patches])
@@ -99,10 +118,12 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
 
         # Skip connection
         encoded_patches = layers.Add()([x3, x2])
-
+    # encode pathces with frame numbers and runnig speed 
     encoded_patches = layers.Reshape((delay,-1))(encoded_patches)
     encoded_patches = ModulationEmbedding()(encoded_patches,running_speed_input)
-    encoded_patches = layers.Dense(units=embed_dim)(encoded_patches)
+    encoded_patches = layers.Dense(units=embed_dim)(encoded_patches) # reshaping by linear transfomation into orginal embedding size
+
+    # Temporal attention 
     for _ in range(num_temporal_transfomers):
         # Layer normalization and MHSA
         x1 = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
@@ -131,6 +152,5 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
     representation = layers.GlobalAvgPool1D()(representation)
     regularization = tf.keras.regularizers.L1L2(l1=1e-6, l2=1e-6)
     outputs = layers.Dense(units=output_shape, activation="linear",kernel_regularizer=regularization)(representation)
-    model = keras.Model(inputs=[inputs,running_speed_input], outputs=outputs)
+    model = keras.Model(inputs=[inputs,running_speed_input,eye_tracking_input], outputs=outputs)
     return model
-model = bulid_model(num_heads=4,spatial_layers=3,temporal_layers=2,delay=40,embed_dim=128,output_shape=8)

@@ -18,9 +18,9 @@ class AffineLayer(tf.keras.layers.Layer):
         affines = tf.reshape(affines,shape = (-1,self.affine_shape[0],self.affine_shape[1]))
 
         # affine transform output grid to the input grid and extract intensity back to output
-        assert len(inputs.shape) == 4;
-        assert len(affines.shape) == 3 and affines.shape[-2:] == (2,3);
-        assert inputs.shape[0] == affines.shape[0];
+        #assert len(inputs.shape) == 4;
+        #assert len(affines.shape) == 3 and affines.shape[-2:] == (2,3);
+        #assert inputs.shape[0] == affines.shape[0];
         
         if inputs.dtype != tf.float32: inputs = tf.cast(inputs, dtype = tf.float32);
         input_shape = tf.shape(inputs);
@@ -77,8 +77,8 @@ class AffineLayer(tf.keras.layers.Layer):
         weight_sum = (lu_weight + lb_weight + ru_weight + rb_weight);
         output = weighted_sum / weight_sum;
         # reshape output
-        output = tf.keras.layers.Reshape((input_shape[1] // self.downsample_factor, input_shape[2] // self.downsample_factor, input_shape[3]))(output);
-        return output
+        output = tf.reshape(output,input_shape)
+        return output;
     
 class Affine_transform(tf.keras.layers.Layer): 
     def call(self,stimuli_input,eye_input):
@@ -87,6 +87,7 @@ class Affine_transform(tf.keras.layers.Layer):
         shape = tf.concat([shape_stimuli,shape_eye],axis =0)
         b = shape[0]
         f = shape[1]
+        stimuli_input = tf.cast(stimuli_input,dtype=tf.float32)
         stimuli_input = tf.reshape(stimuli_input,shape=(b,f,-1))
         eye_input = tf.reshape(eye_input,shape = (b,f,-1))
         eye_input = tf.cast(eye_input,dtype = tf.float32)
