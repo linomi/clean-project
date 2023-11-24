@@ -5,7 +5,7 @@ import gc
 from tensorflow import keras
 from keras import layers
 from keras.models import Model
-from new_affine_transformation import Af
+from test_affine import Af
 
 class Tublet_projection(layers.Layer):
     def __init__(self, embed_dim, patch_size, **kwargs):
