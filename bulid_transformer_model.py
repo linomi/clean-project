@@ -5,7 +5,7 @@ import gc
 from tensorflow import keras
 from keras import layers
 from keras.models import Model
-from test_affine import Af
+
 
 class Tublet_projection(layers.Layer):
     def __init__(self, embed_dim, patch_size, **kwargs):
@@ -74,24 +74,18 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
 
     inputs = layers.Input(shape=input_shape,name="image_input")
     running_speed_input = layers.Input(shape = (delay),name= "running_input")
-    eye_tracking_input  = layers.Input(shape = (delay,4),name= 'eye_input')
+
 
     
     
-    # trsnform eye tracking data to be feed in Affine tranformation layer
-    e_dense = layers.Dense(32,activation='elu')(eye_tracking_input)
-    e_dense = layers.Dense(16,activation='elu')(e_dense)
-    e_dense = layers.Dense(6,activation='tanh')(e_dense)
-    e_dense = layers.Reshape((delay,6))(e_dense)
+
 
     
 
-    # Affine transformation 
 
-    transformed = Af()(inputs,e_dense)
 
     # Create patches.
-    patches = Tublet_projection(patch_size=(16,16),embed_dim=embed_dim)(transformed)
+    patches = Tublet_projection(patch_size=(16,16),embed_dim=embed_dim)(inputs)
     pathces = Lambda(lambda x : x/255.0)(patches)
     #Encode patches.
     encoded_patches = PositionalEncoder(embed_dim=embed_dim)(pathces)
@@ -152,5 +146,5 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
     representation = layers.GlobalAvgPool1D()(representation)
     regularization = tf.keras.regularizers.L1L2(l1=1e-6, l2=1e-6)
     outputs = layers.Dense(units=output_shape, activation="linear",kernel_regularizer=regularization)(representation)
-    model = keras.Model(inputs=[inputs,running_speed_input,eye_tracking_input], outputs=outputs)
+    model = keras.Model(inputs=[inputs,running_speed_input], outputs=outputs)
     return model
