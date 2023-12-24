@@ -3,6 +3,14 @@ from allensdk.core.brain_observatory_cache import BrainObservatoryCache
 boc = BrainObservatoryCache(cache= True,manifest_file='../brain_data/brain_observatory_manifest.json')
 import numpy as np
 
+
+def image_normalizer(images):
+
+
+    for i in range(len(images)):
+        images[i]  = (images[i] - images[i].min())/(images[i].max()-images[i].min())
+    return images
+
 def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reliablity = 0.6):
     nwb = boc.get_ophys_experiment_data(ophys_experiment_id=experiment_id)
     num_cells = len(nwb.get_cell_specimen_ids())
@@ -13,6 +21,11 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
     eye_data = boc.get_eye_tracking(ophys_experiment_id=experiment_id)
     train_movie = nwb.get_stimulus_template('natural_movie_three')
     train_movie = np.expand_dims(train_movie,axis = 3)
+    train_movie = image_normalizer(train_movie)
+
+
+
+
     dff = nwb.get_dff_traces(cell_specimen_ids=nwb.get_cell_specimen_ids())
     train_trace = dff[1][:,np.array(nwb.get_stimulus_table('natural_movie_three'))[:,2]]
     train_trace = train_trace.reshape((num_cells,10,3600))
@@ -36,6 +49,8 @@ def load_data(experiment_id,switch_data = False,train_reliablity = 0.5,test_reli
 
     val_movie = nwb.get_stimulus_template('natural_movie_one')
     val_movie = np.expand_dims(val_movie,axis = 3)
+    val_movie = image_normalizer(val_movie)
+
     dff = nwb.get_dff_traces(cell_specimen_ids=nwb.get_cell_specimen_ids())
     val_trace = dff[1][:,np.array(nwb.get_stimulus_table('natural_movie_one'))[:,2]]
     val_trace = val_trace.reshape((num_cells,10,900))

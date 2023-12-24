@@ -86,7 +86,7 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
 
     # Create patches.
     patches = Tublet_projection(patch_size=(16,16),embed_dim=embed_dim)(inputs)
-    pathces = Lambda(lambda x : x/255.0)(patches)
+    #pathces = Lambda(lambda x : x/255.0)(patches)
     #Encode patches.
     encoded_patches = PositionalEncoder(embed_dim=embed_dim)(pathces)
 
