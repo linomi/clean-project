@@ -60,7 +60,7 @@ class PositionalEncoder(layers.Layer):
         encoded_tokens = encoded_tokens + encoded_positions
         return encoded_tokens
 
-def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_shape):
+def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_shape,regularization_term):
     delay = delay
     num_heads =num_heads
     num_spatial_tranformers = spatial_layers
@@ -144,7 +144,7 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
 
     representation = layers.LayerNormalization(epsilon=LAYER_NORM_EPS)(encoded_patches)
     representation = layers.GlobalAvgPool1D()(representation)
-    regularization = tf.keras.regularizers.L1L2(l1=1e-6, l2=1e-6)
+    regularization = tf.keras.regularizers.L1L2(l1=regularization_term, l2=regularization_term)
     outputs = layers.Dense(units=output_shape, activation="linear",kernel_regularizer=regularization)(representation)
     model = keras.Model(inputs=[inputs,running_speed_input], outputs=outputs)
     return model
