@@ -60,7 +60,15 @@ class PositionalEncoder(layers.Layer):
         encoded_tokens = encoded_tokens + encoded_positions
         return encoded_tokens
 
-def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_shape,regularization_term):
+def bulid_model(num_heads,
+                spatial_layers,temporal_layers,
+                delay,embed_dim,output_shape,
+                regularization_term,
+                core_path
+                pretrained = True):
+    
+
+
     delay = delay
     num_heads =num_heads
     num_spatial_tranformers = spatial_layers
@@ -88,7 +96,7 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
     patches = Tublet_projection(patch_size=(16,16),embed_dim=embed_dim)(inputs)
     #pathces = Lambda(lambda x : x/255.0)(patches)
     #Encode patches.
-    encoded_patches = PositionalEncoder(embed_dim=embed_dim)(pathces)
+    encoded_patches = PositionalEncoder(embed_dim=embed_dim)(patches)
 
     #spatial Encoder
     for _ in range(num_spatial_tranformers):
@@ -140,11 +148,19 @@ def bulid_model(num_heads,spatial_layers,temporal_layers,delay,embed_dim,output_
         # Skip connection
         encoded_patches = layers.Add()([x3, x2])
 
+    ## core model construction and load 
+    core_model = Model(inputs=[inputs,running_speed_input],outputs = encoded_patches)
+    if pretrained:
+        core_model.load_weights('core_path')
+    
 
 
-    representation = layers.LayerNormalization(epsilon=LAYER_NORM_EPS)(encoded_patches)
+
+
+
+    representation = layers.LayerNormalization(epsilon=LAYER_NORM_EPS)(core_model.output)
     representation = layers.GlobalAvgPool1D()(representation)
     regularization = tf.keras.regularizers.L1L2(l1=regularization_term, l2=regularization_term)
     outputs = layers.Dense(units=output_shape, activation="linear",kernel_regularizer=regularization)(representation)
     model = keras.Model(inputs=[inputs,running_speed_input], outputs=outputs)
-    return model
+    return model,core_model
