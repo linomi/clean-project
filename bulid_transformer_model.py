@@ -64,8 +64,9 @@ def bulid_model(num_heads,
                 spatial_layers,temporal_layers,
                 delay,embed_dim,output_shape,
                 regularization_term,
-                core_path
-                pretrained = True):
+                core_path,
+                pretrained = False,
+                droputs_rate = 0.2):
     
 
 
@@ -120,6 +121,7 @@ def bulid_model(num_heads,
 
         # Skip connection
         encoded_patches = layers.Add()([x3, x2])
+        encoded_patches = layers.Dropout(rate = droputs_rate)(encoded_patches)
     # encode pathces with frame numbers and runnig speed 
     encoded_patches = layers.Reshape((delay,-1))(encoded_patches)
     encoded_patches = ModulationEmbedding()(encoded_patches,running_speed_input)
@@ -147,6 +149,7 @@ def bulid_model(num_heads,
 
         # Skip connection
         encoded_patches = layers.Add()([x3, x2])
+        encoded_patches = layers.Dropout(rate = droputs_rate)(encoded_patches)
 
     ## core model construction and load 
     core_model = Model(inputs=[inputs,running_speed_input],outputs = encoded_patches)
